@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sample-app
+
+  Sample SAM Template for project kick start
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+    Environment:
+      Variables:
+        API_VERSION: ""
+
+Resources:
+  SampleAppFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: app/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Events:
+        SampleApp:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Join:
+          - ""
+          - - ApplicationInsights-SAM-
+            - Ref: AWS::StackName
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Fn::Join:
+          - ""
+          - - ApplicationInsights-SAM-
+            - Ref: AWS::StackName
+      AutoConfigurationEnabled: "true"
+    DependsOn: ApplicationResourceGroup
+Outputs:
+  SampleApi:
+    Description: API Gateway endpoint URL for Prod stage for sample app function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/runn/"
+  SampleFunction:
+    Description: Sample App Lambda Function ARN
+    Value: !GetAtt SampleAppFunction.Arn
+  SampleFunctionIamRole:
+    Description: Implicit IAM Role created for sample app function
+    Value: !GetAtt SampleFunctionRole.Arn
